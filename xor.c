@@ -1,14 +1,20 @@
+/*
+ * NeuralNetwork For XOR
+ *
+ * Input layer:  2
+ * Hidden layer: 2
+ * Output layer: 1
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include "inputData.h"
 
 #define EPSILON 4.0
 #define ETA 0.1
 #define TIMES 1000
 #define INIT_WEIGHT 0.3
-#define RAW 100
 
 double randNum(void)
 {
@@ -20,13 +26,14 @@ double sigmoid(double x)
   return 1/(1+exp(-1*EPSILON*x));
 }
 
-
 int main(void)
 {
-  double data[RAW*2][3];
-
-  inputData(data);
-
+  double data[4][3] = {
+    {0.0, 0.0, 0.0},
+    {0.0, 1.0, 1.0},
+    {1.0, 0.0, 1.0},
+    {1.0, 1.0, 0.0}
+  };
   double wbd, wbe, wcd, wce, wab, wac;
   double offb, offc, offa;
   double outd, oute, outb, outc, outa;
@@ -35,12 +42,10 @@ int main(void)
   int r;
   double error;
   double errorSum;
-  double accuracy = 0.0;
+  double accuracy = 0;
   int times;
   int seed;
   FILE *fp;
-
-  double a, b, c = 0;
 
   fp = fopen("error.dat", "w");
   if (fp==NULL) {
@@ -67,7 +72,7 @@ int main(void)
 
     errorSum = 0.0;
 
-    for(r=0; r<RAW*2; r++) {
+    for(r=0; r<4; r++) {
 
       /* ----------- */
       /* Feedforward */
@@ -90,10 +95,12 @@ int main(void)
 
       if(times==TIMES-1) {
         printf("[%d]=%.10f, (%f)\n", r, outa, data[r][2]);
-        if(data[r][2] == 0 && outa < 0.1)
+
+        if(data[r][2] == 0 && outa < 0.05)
           accuracy += 1.0;
         else if(data[r][2] == 1 && outa > 0.95)
           accuracy += 1.0;
+
       }
 
       /* ---------------- */
@@ -102,6 +109,14 @@ int main(void)
       error = ((outa-data[r][2])*(outa-data[r][2]));
       errorSum += error;
 
+      /*
+       *
+       * ここに更新式を書く
+       *
+       * deltaa = ...
+       * wab = wab + ...
+       *
+       */
       deltaa = (outa - data[r][2]) * EPSILON *(1.0 - outa) * outa;
       deltab = deltaa * wab * EPSILON *(1.0 - outb) * outb;
       deltac = deltaa * wac * EPSILON *(1.0 - outc) * outc;
@@ -115,13 +130,14 @@ int main(void)
       wcd = wcd - ETA * deltac * outd;
       wce = wce - ETA * deltac * oute;
       offc -= ETA * deltac * 1;
-
     }
     printf("errorSum = %f\n", errorSum/4.0);
     fprintf(fp, "%f\n", errorSum/4.0);
 
   }
+
   printf("accuracy: %lf\n", accuracy/r);
   fclose(fp);
+
   return 0;
 }
